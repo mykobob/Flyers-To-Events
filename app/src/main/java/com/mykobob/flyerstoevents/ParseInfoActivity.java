@@ -4,11 +4,17 @@ import com.mykobob.flyerstoevents.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
+import java.io.File;
 
 
 /**
@@ -45,6 +51,10 @@ public class ParseInfoActivity extends Activity {
      * The instance of the {@link SystemUiHider} for this activity.
      */
     private SystemUiHider mSystemUiHider;
+
+    private String tag = "flyerstoevents";
+
+    private File imageFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +123,28 @@ public class ParseInfoActivity extends Activity {
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+
+
+        launchCameraWithInfo();
+
+    }
+
+    private void launchCameraWithInfo() {
+        String name;
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, 2);
+
+    }
+
+    private File createImageFile(int type) {
+        File folder = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "Flyers To Events");
+
+        if(!folder.exists()) {
+            if(!folder.mkdirs()) {
+                Log.e()
+            }
+        }
     }
 
     @Override
