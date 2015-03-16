@@ -6,15 +6,12 @@
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
-    <TextView android:id="@+id/fullscreen_content" android:layout_width="match_parent"
-        android:layout_height="match_parent" android:keepScreenOn="true" android:textColor="#33b5e5"
-        android:textStyle="bold" android:textSize="50sp" android:gravity="center"
-        android:text="@string/dummy_content" />
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
-    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:id="@+id/container">
 
         <LinearLayout android:id="@+id/fullscreen_content_controls" style="?metaButtonBarStyle"
             android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -22,11 +19,26 @@
             android:background="@color/black_overlay" android:orientation="horizontal"
             tools:ignore="UselessParent">
 
-            <Button android:id="@+id/dummy_button" style="?metaButtonBarButtonStyle"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:text="@string/dummy_button" />
-
         </LinearLayout>
-    </FrameLayout>
+
+        <Button android:id="@+id/anotherPic" style="?metaButtonBarButtonStyle"
+            android:layout_width="188dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:text="@string/anotherPic"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/fullscreen_content"
+            android:layout_gravity="center"
+            android:layout_above="@+id/anotherPic"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+    </RelativeLayout>
 
 </FrameLayout>

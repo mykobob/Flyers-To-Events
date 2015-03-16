@@ -5,16 +5,28 @@ import com.mykobob.flyerstoevents.util.SystemUiHider;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.Image;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 /**
@@ -54,7 +66,13 @@ public class ParseInfoActivity extends Activity {
 
     private String tag = "flyerstoevents";
 
+    private static final int MEDIA_TYPE_IMAGE = 1;
+    private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
+
     private File imageFile;
+    private Uri uri;
+
+    private Bitmap pic;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +81,7 @@ public class ParseInfoActivity extends Activity {
         setContentView(R.layout.activity_parse_info);
 
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
-        final View contentView = findViewById(R.id.fullscreen_content);
+        final ImageView contentView = (ImageView) findViewById(R.id.fullscreen_content);
 
         // Set up an instance of SystemUiHider to control the system UI for
         // this activity.
@@ -108,6 +126,7 @@ public class ParseInfoActivity extends Activity {
                 });
 
         // Set up the user interaction to manually show or hide the system UI.
+        /*
         contentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -118,33 +137,129 @@ public class ParseInfoActivity extends Activity {
                 }
             }
         });
+        */
 
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
-        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        final Button anotherPic = (Button) findViewById(R.id.anotherPic);
+        anotherPic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                launchCameraWithInfo();
+            }
+        });
+        findViewById(R.id.anotherPic).setOnTouchListener(mDelayHideTouchListener);
+
 
 
         launchCameraWithInfo();
 
     }
 
+    private void rotateBitmap90Degrees() {
+        Matrix mat = new Matrix();
+        mat.postRotate(90);
+        int width = pic.getWidth();
+        int height = pic.getHeight();
+
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(pic, width, height, true);
+        Bitmap rotateBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), mat, true);
+
+        pic = rotateBitmap;
+    }
+
     private void launchCameraWithInfo() {
-        String name;
+
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(intent, 2);
+        imageFile = createImageFile(MEDIA_TYPE_IMAGE);
+        uri = Uri.fromFile(imageFile);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+
+        startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode != CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
+            return;
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(resultCode == RESULT_OK) {
+//            Toast.makeText(this, "Good Pic at " + data.getData(), Toast.LENGTH_LONG).show();
+//            pic = (Bitmap) data.getExtras().get("data");
+//            deletePicTaken();
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            options.inSampleSize = 8;
+            pic = BitmapFactory.decodeFile(uri.getPath(), options);
+            if(pic.getHeight() < pic.getWidth()) {
+                rotateBitmap90Degrees();
+            }
+            Toast.makeText(this, "The picture is " + pic, Toast.LENGTH_LONG).show();
+
+            /* Set the imageView to the bitmap */
+            ImageView showImage = (ImageView) findViewById(R.id.fullscreen_content);
+            if(showImage != null) {
+                showImage.setImageBitmap(pic);
+            } else {
+                Log.e(tag, "ImageView doesn't exist");
+            }
+
+        } else if(resultCode == RESULT_CANCELED) {
+            Toast.makeText(this, "Must take a picture!", Toast.LENGTH_LONG).show();
+            finish();
+        } else {
+            Toast.makeText(this, "Must take a picture!", Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
+    private void deletePicTaken(){
+        final String[] imageColumns = { BaseColumns._ID, MediaStore.MediaColumns.DATA };
+        final String imageOrderBy = BaseColumns._ID + " DESC";
+        Cursor imageCursor = managedQuery(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, imageColumns, null, null, imageOrderBy);
+        if(imageCursor.moveToFirst()){
+            //int id = imageCursor.getInt(imageCursor.getColumnIndex(MediaStore.Images.Media._ID));
+            String fullPath = imageCursor.getString(imageCursor.getColumnIndex(MediaStore.MediaColumns.DATA));
+            //imageCursor.close();
+            File file = new File(fullPath);
+            Toast.makeText(this, file.getPath(), Toast.LENGTH_LONG).show();
+            Log.i(tag, "image is here " + file.getPath());
+            boolean deleted = file.delete();
+            if(deleted) {
+                Log.i(tag, "image deleted");
+            }
+        }
+
 
     }
 
     private File createImageFile(int type) {
+
+        if(type != MEDIA_TYPE_IMAGE) {
+            return null;
+        }
+
         File folder = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), "Flyers To Events");
 
         if(!folder.exists()) {
             if(!folder.mkdirs()) {
-                Log.e()
+                Log.e(tag, "failed to create directory");
+                return null;
             }
         }
+
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        File mediaFile;
+
+        mediaFile = new File(folder.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
+
+        return mediaFile;
+
     }
 
     @Override
