@@ -4,6 +4,8 @@ package com.mykobob.flyerstoevents;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Environment;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 
@@ -33,7 +35,7 @@ public class OCROperations {
 
     private TessBaseAPI baseAPI;
     private Bitmap picture;
-    private StringBuffer text;
+    private String text;
     private String DATA_PATH = Environment.getExternalStorageDirectory() + "/flyerstoevents/";
     private String language = "eng";
 
@@ -48,8 +50,6 @@ public class OCROperations {
         readInDefaultValues();
     }
 
-
-
     private void readInDefaultValues() {
         for(String tmpMonth : MONTHS) {
             months.add(new Month(tmpMonth));
@@ -62,18 +62,22 @@ public class OCROperations {
         baseAPI.init(DATA_PATH, language);
         baseAPI.setImage(picture);
 
-        text = getText();
+        text = createText();
         baseAPI.end();
      }
 
-    public StringBuffer getText() {
-        return new StringBuffer(baseAPI.getUTF8Text());
+    public String createText() {
+        return baseAPI.getUTF8Text();
     }
 
-    public List<Event> getAllEvents(StringBuffer text) {
+    public String getText() {
+        return text;
+    }
+
+    public List<Event> getAllEvents(String text) {
         List<Event> events = new ArrayList<>();
 
-        Event curEvent = new Event();
+        Event curEvent = new Event(text);
 
         GregorianCalendar time = new GregorianCalendar();
         Calendar today = Calendar.getInstance();
@@ -98,14 +102,14 @@ public class OCROperations {
 
         // Building and Location
 
+        events.add(curEvent);
 
         return events;
     }
 
-    private Date getDate(StringBuffer text) {
-        String manipulate = text.toString().toLowerCase();
+    private Date getDate(String text) {
+        String manipulate = text.toLowerCase();
         manipulate = manipulate.replaceAll("-", "/");
-        text = new StringBuffer(manipulate);
 
         String regex = "()";
         Pattern pattern = Pattern.compile("(\\d{2})/(\\d{2})/(\\d{2}|\\d{4})?(.*)");

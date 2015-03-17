@@ -2,9 +2,7 @@ package com.mykobob.flyerstoevents;
 
 import com.mykobob.flyerstoevents.util.SystemUiHider;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.database.Cursor;
@@ -12,16 +10,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
-import android.media.Image;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
+import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -35,7 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -84,6 +81,7 @@ public class ParseInfoActivity extends Activity {
     private Bitmap pic;
 
     private OCROperations operate;
+    private List<Event> events;
 
     private ProgressBar progress;
     private TextView processing;
@@ -102,6 +100,7 @@ public class ParseInfoActivity extends Activity {
         processing = (TextView) findViewById(R.id.process_str);
         progress.setVisibility(View.GONE);
         processing.setVisibility(View.GONE);
+        events = new ArrayList<>();
 
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
         final ImageView contentView = (ImageView) findViewById(R.id.fullscreen_content);
@@ -228,18 +227,22 @@ public class ParseInfoActivity extends Activity {
         if(pic != null) {
             progress.setVisibility(View.VISIBLE);
             processing.setVisibility(View.VISIBLE);
+            final boolean[] finished = new boolean[1];
             Thread t = new Thread() {
                 @Override
                 public void run() {
                     operate.setInfo(pic);
+                    events = operate.getAllEvents(operate.getText());
                     Log.i(tag, "finished reading");
-                    processing.setVisibility(View.GONE);
-                    progress.setVisibility(View.GONE);
-
+                    finished[0] = true;
+                    showData();
                 }
             };
 
             t.start();
+            while(!finished[0]);
+            processing.setVisibility(View.GONE);
+            progress.setVisibility(View.GONE);
 
         } else {
             Toast.makeText(ParseInfoActivity.this, "Take a picture first!", Toast.LENGTH_LONG).show();
@@ -247,7 +250,12 @@ public class ParseInfoActivity extends Activity {
 
     }
 
+    private void showData() {
+        Intent showData = new Intent(this, Display_Text.class);
+        showData.putExtra("OCR", events.get(0));
 
+        startActivity(showData);
+    }
 
     private void makeUpright() {
 

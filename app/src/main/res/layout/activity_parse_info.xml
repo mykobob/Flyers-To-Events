@@ -73,7 +73,8 @@
             android:text="@string/process_str"
             android:id="@+id/process_str"
             android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true" />
+            android:layout_toRightOf="@+id/progressBar"
+            android:layout_toEndOf="@+id/progressBar" />
 
 
     </RelativeLayout>
