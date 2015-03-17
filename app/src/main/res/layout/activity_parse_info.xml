@@ -1,6 +1,6 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:background="#0099cc"
+    android:layout_height="match_parent" android:background="#FFFFFF"
     tools:context=".ParseInfoActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
@@ -25,8 +25,22 @@
             android:layout_width="188dp" android:layout_height="wrap_content"
             android:layout_weight="1" android:text="@string/anotherPic"
             android:layout_gravity="center_horizontal|bottom"
+            android:textColor="@color/iOS_blue"
             android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true" />
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Process_Pic"
+            android:textColor="@color/iOS_blue"
+            android:id="@+id/process_button"
+            style="?metaButtonBarButtonStyle"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@+id/anotherPic"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
 
         <ImageView
             android:layout_width="wrap_content"
@@ -39,6 +53,8 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
+
+
     </RelativeLayout>
 
 </FrameLayout>

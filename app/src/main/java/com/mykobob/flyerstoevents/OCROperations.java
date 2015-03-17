@@ -20,6 +20,12 @@ public class OCROperations {
 
     private static final String TAG = "com.mykobob.flytoevents";
 
+    private String[] MONTHS = {
+            "January Jan january jan", "February Feb february feb", "March Mar march mar",
+            "April Apr april apr", "May May may may", "June Jun june jun", "July Jul july jul",
+            "August Aug august aug", "September Sept september sept", "October Oct october oct",
+            "November Nov november nov", "December Dec december dec"};
+
     private TessBaseAPI baseAPI;
     private Bitmap picture;
     private StringBuffer text;
@@ -36,9 +42,8 @@ public class OCROperations {
 
     private void readInDefaultValues() {
         try {
-            Scanner in = new Scanner(new File("assets/months.txt"));
-            while(in.hasNextLine()) {
-                months.add(new Month(in.nextLine()));
+            for(String tmpMonth : MONTHS) {
+                months.add(new Month(tmpMonth));
             }
         } catch (Exception e) {
             Log.e(TAG, "Months.txt cannot be found");
@@ -105,13 +110,14 @@ public class OCROperations {
         return null;
     }
 
-    private
-
-    class Month {
+    private class Month {
         private String[] names;
+        private String[] toPrint = new String[2];
 
         public Month(String data) {
             names = data.split(" ");
+            toPrint[0] = names[0];
+            toPrint[1] = names[1];
         }
 
         public boolean isThisMonth(String potentialMonth) {

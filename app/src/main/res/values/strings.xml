@@ -2,5 +2,6 @@
     <string name="app_name">Flyers to Events</string>
 
     <string name="anotherPic">Take Another Picture!</string>
+    <string name="Process_Pic">Process!</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>

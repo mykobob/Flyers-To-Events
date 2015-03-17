@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
@@ -25,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -74,19 +76,24 @@ public class ParseInfoActivity extends Activity {
 
     private Bitmap pic;
 
+    private OCROperations operate;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_parse_info);
 
+        operate = new OCROperations();
+
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
         final ImageView contentView = (ImageView) findViewById(R.id.fullscreen_content);
 
         // Set up an instance of SystemUiHider to control the system UI for
         // this activity.
-        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
-        mSystemUiHider.setup();
+//        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
+//        mSystemUiHider.setup();
+        /*
         mSystemUiHider
                 .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
                     // Cached values.
@@ -123,7 +130,7 @@ public class ParseInfoActivity extends Activity {
                             delayedHide(AUTO_HIDE_DELAY_MILLIS);
                         }
                     }
-                });
+                });*/
 
         // Set up the user interaction to manually show or hide the system UI.
         /*
@@ -149,24 +156,62 @@ public class ParseInfoActivity extends Activity {
                 launchCameraWithInfo();
             }
         });
-        findViewById(R.id.anotherPic).setOnTouchListener(mDelayHideTouchListener);
+//        findViewById(R.id.anotherPic).setOnTouchListener(mDelayHideTouchListener);
 
-
+        Button process = (Button) findViewById(R.id.process_button);
+        process.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(pic != null) {
+                    operate.setInfo(uri.getPath(), pic);
+                } else {
+                    Toast.makeText(ParseInfoActivity.this, "Take a picture first!", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
 
         launchCameraWithInfo();
 
     }
 
-    private void rotateBitmap90Degrees() {
-        Matrix mat = new Matrix();
-        mat.postRotate(90);
-        int width = pic.getWidth();
-        int height = pic.getHeight();
+    private void makeUpright() {
 
-        Bitmap scaledBitmap = Bitmap.createScaledBitmap(pic, width, height, true);
-        Bitmap rotateBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), mat, true);
+        try {
+            ExifInterface exif = new ExifInterface(uri.getPath());
+            int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int rotate = 0;
+            int height = pic.getHeight(), width = pic.getWidth();
+            switch (exifOrientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotate = 90;
+                    height = pic.getWidth();
+                    width = pic.getHeight();
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotate = 180;
+                    height = pic.getHeight();
+                    width = pic.getWidth();
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotate = 270;
+                    height = pic.getWidth();
+                    width = pic.getHeight();
+                    break;
+            }
 
-        pic = rotateBitmap;
+            if(rotate != 0) {
+                Matrix mat = new Matrix();
+                mat.postRotate(rotate);
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(pic, height, width, true);
+                Bitmap rotateBitmap = Bitmap.createBitmap(scaledBitmap, 0, 0, scaledBitmap.getWidth(), scaledBitmap.getHeight(), mat, true);
+                pic = rotateBitmap;
+            }
+
+
+
+        } catch (IOException e) {
+            Log.e(tag, "Invalid uri path: " + uri.getPath());
+        }
     }
 
     private void launchCameraWithInfo() {
@@ -191,22 +236,14 @@ public class ParseInfoActivity extends Activity {
 //            Toast.makeText(this, "Good Pic at " + data.getData(), Toast.LENGTH_LONG).show();
 //            pic = (Bitmap) data.getExtras().get("data");
 //            deletePicTaken();
+
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             options.inSampleSize = 8;
             pic = BitmapFactory.decodeFile(uri.getPath(), options);
-            if(pic.getHeight() < pic.getWidth()) {
-                rotateBitmap90Degrees();
-            }
-            Toast.makeText(this, "The picture is " + pic, Toast.LENGTH_LONG).show();
+            makeUpright();
+            displayBitmap();
 
-            /* Set the imageView to the bitmap */
-            ImageView showImage = (ImageView) findViewById(R.id.fullscreen_content);
-            if(showImage != null) {
-                showImage.setImageBitmap(pic);
-            } else {
-                Log.e(tag, "ImageView doesn't exist");
-            }
 
         } else if(resultCode == RESULT_CANCELED) {
             Toast.makeText(this, "Must take a picture!", Toast.LENGTH_LONG).show();
@@ -216,6 +253,17 @@ public class ParseInfoActivity extends Activity {
             finish();
         }
     }
+
+    private void displayBitmap() {
+        /* Set the imageView to the bitmap */
+        ImageView showImage = (ImageView) findViewById(R.id.fullscreen_content);
+        if(showImage != null) {
+            showImage.setImageBitmap(pic);
+        } else {
+            Log.e(tag, "ImageView doesn't exist");
+        }
+    }
+
 
     private void deletePicTaken(){
         final String[] imageColumns = { BaseColumns._ID, MediaStore.MediaColumns.DATA };
@@ -262,6 +310,7 @@ public class ParseInfoActivity extends Activity {
 
     }
 
+    /*
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -271,13 +320,14 @@ public class ParseInfoActivity extends Activity {
         // are available.
         delayedHide(100);
     }
-
+*/
 
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the
      * system UI. This is to prevent the jarring behavior of controls going away
      * while interacting with activity UI.
      */
+    /*
     View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -287,7 +337,8 @@ public class ParseInfoActivity extends Activity {
             return false;
         }
     };
-
+    */
+/*
     Handler mHideHandler = new Handler();
     Runnable mHideRunnable = new Runnable() {
         @Override
@@ -296,12 +347,13 @@ public class ParseInfoActivity extends Activity {
         }
     };
 
-    /**
+     *
      * Schedules a call to hide() in [delay] milliseconds, canceling any
      * previously scheduled calls.
-     */
+
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
+    */
 }
