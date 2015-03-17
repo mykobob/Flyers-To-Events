@@ -4,4 +4,6 @@
     <string name="anotherPic">Take Another Picture!</string>
     <string name="Process_Pic">Process!</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="process_str">Processing...</string>
+    <string name="image_reason">Display the Picture that was just taken</string>
 </resources>

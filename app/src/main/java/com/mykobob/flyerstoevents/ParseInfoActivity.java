@@ -4,7 +4,9 @@ import com.mykobob.flyerstoevents.util.SystemUiHider;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -23,10 +25,15 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -78,6 +85,12 @@ public class ParseInfoActivity extends Activity {
 
     private OCROperations operate;
 
+    private ProgressBar progress;
+    private TextView processing;
+
+    private String DATA_PATH = Environment.getExternalStorageDirectory() + "/flyerstoevents/";
+    private String language = "eng";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +98,10 @@ public class ParseInfoActivity extends Activity {
         setContentView(R.layout.activity_parse_info);
 
         operate = new OCROperations();
+        progress = (ProgressBar) findViewById(R.id.progressBar);
+        processing = (TextView) findViewById(R.id.process_str);
+        progress.setVisibility(View.GONE);
+        processing.setVisibility(View.GONE);
 
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
         final ImageView contentView = (ImageView) findViewById(R.id.fullscreen_content);
@@ -158,21 +175,79 @@ public class ParseInfoActivity extends Activity {
         });
 //        findViewById(R.id.anotherPic).setOnTouchListener(mDelayHideTouchListener);
 
-        Button process = (Button) findViewById(R.id.process_button);
-        process.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(pic != null) {
-                    operate.setInfo(uri.getPath(), pic);
-                } else {
-                    Toast.makeText(ParseInfoActivity.this, "Take a picture first!", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+        createEnvironment();
 
         launchCameraWithInfo();
+    }
+
+    private void createEnvironment() {
+        String[] paths = new String[] { DATA_PATH, DATA_PATH + "tessdata/" };
+
+        for (String path : paths) {
+            File dir = new File(path);
+            if (!dir.exists()) {
+                if (!dir.mkdirs()) {
+                    Log.e(tag, "ERROR: Creation of directory " + path + " on sdcard failed");
+                    return;
+                } else {
+                    Log.i(tag, "Created directory " + path + " on sdcard");
+                }
+            }
+        }
+
+        String suffix = "tessdata/" + language + ".traineddata";
+        File trainedData = new File(DATA_PATH + suffix);
+        if(!trainedData.exists()) {
+            try {
+                Log.i(tag, "before the load stuff");
+                AssetManager assetManager = getAssets();
+                InputStream in = assetManager.open(suffix);
+                OutputStream out = new FileOutputStream(DATA_PATH + suffix);
+
+                byte[] buf = new byte[1024];
+                int len;
+                while((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+
+                Log.i(tag, "after the load stuff");
+
+                in.close();
+                out.close();
+
+                Log.i(tag, "Copied " + language + " complete");
+
+            } catch (IOException e) {
+                Log.e(tag, "couldn't copy " + language + ". Error is " + e.toString());
+            }
+        }
 
     }
+
+    public void process(View view) {
+        if(pic != null) {
+            progress.setVisibility(View.VISIBLE);
+            processing.setVisibility(View.VISIBLE);
+            Thread t = new Thread() {
+                @Override
+                public void run() {
+                    operate.setInfo(pic);
+                    Log.i(tag, "finished reading");
+                    processing.setVisibility(View.GONE);
+                    progress.setVisibility(View.GONE);
+
+                }
+            };
+
+            t.start();
+
+        } else {
+            Toast.makeText(ParseInfoActivity.this, "Take a picture first!", Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+
 
     private void makeUpright() {
 

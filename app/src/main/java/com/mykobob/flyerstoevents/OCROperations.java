@@ -1,12 +1,17 @@
 package com.mykobob.flyerstoevents;
 
 
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.os.Environment;
 import android.util.Log;
+import android.view.View;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.io.File;
+import java.io.IOError;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -29,6 +34,8 @@ public class OCROperations {
     private TessBaseAPI baseAPI;
     private Bitmap picture;
     private StringBuffer text;
+    private String DATA_PATH = Environment.getExternalStorageDirectory() + "/flyerstoevents/";
+    private String language = "eng";
 
     private List<Month> months;
 
@@ -36,27 +43,28 @@ public class OCROperations {
         baseAPI = new TessBaseAPI();
         months = new ArrayList<>();
 
+
         // TODO make reading in default values a thread
         readInDefaultValues();
     }
 
+
+
     private void readInDefaultValues() {
-        try {
-            for(String tmpMonth : MONTHS) {
-                months.add(new Month(tmpMonth));
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Months.txt cannot be found");
+        for(String tmpMonth : MONTHS) {
+            months.add(new Month(tmpMonth));
         }
     }
 
-    public void setInfo(String path, Bitmap picture) {
+    public void setInfo(Bitmap picture) {
         this.picture = picture;
-
-        baseAPI.init(path, "eng");
+        Log.i("HERE HERE HERE", DATA_PATH);
+        baseAPI.init(DATA_PATH, language);
         baseAPI.setImage(picture);
-     }
 
+        text = getText();
+        baseAPI.end();
+     }
 
     public StringBuffer getText() {
         return new StringBuffer(baseAPI.getUTF8Text());
