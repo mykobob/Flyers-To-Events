@@ -180,6 +180,6 @@ public class OCROperationsTest extends TestCase {
     }
 
     public void testAllowedCharacters() throws Exception {
-        assertEquals("Wrong regex", "[a-zA-Z0-9\\p{Punct}]", operation.regexAllowed);
+        assertEquals("Wrong regex", "^[a-zA-Z0-9\\p{Punct}]", operation.regexAllowed);
     }
 }

@@ -48,6 +48,7 @@ public class OCROperations {
 
     {
         regexAllowed = Arrays.toString(allowedCharacters).replace(", ", "");
+        regexAllowed = "[^" + regexAllowed.substring(1);
     }
 
     private Map<String, Integer> monthsNumber;

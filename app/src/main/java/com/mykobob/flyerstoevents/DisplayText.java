@@ -28,7 +28,7 @@ public class DisplayText extends ActionBarActivity {
         }
 
         TextView view = (TextView) findViewById(R.id.display_all_info);
-        view.setText(operate[0].toString());
+        view.setText("Start: " + operate[0].toString() + " :End");
 
     }
 
