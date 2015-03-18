@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -39,14 +40,18 @@ public class OCROperations {
     private String DATA_PATH = Environment.getExternalStorageDirectory() + "/flyerstoevents/";
     private String language = "eng";
 
+    private String[] allowedCharacters= {"a-z", "A-Z", "0-9", "\\p{Punct}"};
+    public String regexAllowed;
+    {
+        regexAllowed = Arrays.toString(allowedCharacters).replace(", ", "");
+    }
+
     private List<Month> months;
 
     public OCROperations() {
         baseAPI = new TessBaseAPI();
         months = new ArrayList<>();
 
-
-        // TODO make reading in default values a thread
         readInDefaultValues();
     }
 
@@ -62,7 +67,7 @@ public class OCROperations {
         baseAPI.init(DATA_PATH, language);
         baseAPI.setImage(picture);
 
-        text = createText();
+        text = clean(createText());
         baseAPI.end();
      }
 
@@ -72,6 +77,11 @@ public class OCROperations {
 
     public String getText() {
         return text;
+    }
+
+    public String clean(String text) {
+        // Allowed characters...
+        return text.replaceAll(regexAllowed, "");
     }
 
     public List<Event> getAllEvents(String text) {
@@ -90,9 +100,13 @@ public class OCROperations {
         // Format would be
         // MM/DD/YYYY (For now, stick to US)
         //
-        Date date = getDate(text);
+        GregorianCalendar date = getDate(text);
         // ([insert month])(.?)(?<Day>\d+)( ?)(?<year>\d{2}|\d{4})?
+        if(date != null) {
+            time = date;
+        }
 
+        curEvent.setEventInfo(time);
 
 
         // The Time
@@ -107,16 +121,23 @@ public class OCROperations {
         return events;
     }
 
-    private Date getDate(String text) {
+    private GregorianCalendar getDate(String text) {
         String manipulate = text.toLowerCase();
         manipulate = manipulate.replaceAll("-", "/");
 
         String regex = "()";
-        Pattern pattern = Pattern.compile("(\\d{2})/(\\d{2})/(\\d{2}|\\d{4})?(.*)");
+        Pattern pattern = Pattern.compile(".*(\\d{2})/(\\d{2})/(\\d{2}|\\d{4})?(.*)");
 
         Matcher m = pattern.matcher(text);
         if(m.matches()) {
-
+            String[] matched = m.group().split("/");
+            int month = Integer.parseInt(matched[0]);
+            int day = Integer.parseInt(matched[1]);
+            int year = new Date().getYear();
+            if(matched.length > 2) {
+                year = Integer.parseInt(matched[2]);
+            }
+            return new GregorianCalendar(year, month, day);
         }
 
         return null;

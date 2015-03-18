@@ -24,8 +24,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Display_Text"
-            android:label="@string/title_activity_display__text" >
+            android:name=".DisplayText"
+            android:label="@string/title_activity_display_text" >
         </activity>
     </application>
 

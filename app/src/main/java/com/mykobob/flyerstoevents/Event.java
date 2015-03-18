@@ -9,7 +9,7 @@ import java.util.GregorianCalendar;
 
 public class Event implements Parcelable {
 
-    private Calendar eventInfo;
+    private GregorianCalendar eventInfo;
 
     private String building;
     private double roomNumber;
@@ -86,8 +86,8 @@ public class Event implements Parcelable {
         this.building = building;
     }
 
-    public Date getDate() {
-        return new Date(getYear(), getMonth(), getDay());
+    public GregorianCalendar getDate() {
+        return eventInfo;
     }
 
     private int getMonth() {
@@ -106,6 +106,6 @@ public class Event implements Parcelable {
 
     @Override
     public String toString() {
-        return text.toString();
+        return text;
     }
 }

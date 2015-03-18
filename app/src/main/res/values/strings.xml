@@ -6,7 +6,7 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="process_str">Processing...</string>
     <string name="image_reason">Display the Picture that was just taken</string>
-    <string name="title_activity_display__text">Display_Text</string>
+    <string name="title_activity_display_text">DisplayText</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>

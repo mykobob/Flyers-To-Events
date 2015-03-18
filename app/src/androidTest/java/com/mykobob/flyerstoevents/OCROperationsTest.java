@@ -4,7 +4,9 @@ import junit.framework.TestCase;
 import junit.framework.Assert;
 
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 
@@ -16,131 +18,136 @@ public class OCROperationsTest extends TestCase {
         operation = new OCROperations();
     }
 
-    public void testGetAllEvents() throws Exception {
+    public void testEventsWithDigitDate() throws Exception {
 
         // Standard date
-        StringBuffer dateStr = new StringBuffer("7/4/1996");
+        String dateStr = "7/4/1996";
         List<Event> eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
-        Date date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 7, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 1996, date.getYear());
+        GregorianCalendar date = eventList.get(0).getDate();
+        Assert.assertEquals("Wrong month", 7, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 1996, date.get(Calendar.YEAR));
 
         // Leading 0 on month
-        dateStr = new StringBuffer("07/4/1996");
+        dateStr = "07/4/1996";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 7, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 1996, date.getYear());
+        Assert.assertEquals("Wrong month", 7, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 1996, date.get(Calendar.YEAR));
 
         // Leading 0 on day
-        dateStr = new StringBuffer("7/04/1996");
+        dateStr = "7/04/1996";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 7, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 1996, date.getYear());
+        Assert.assertEquals("Wrong month", 7, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 1996, date.get(Calendar.YEAR));
 
         // Two digit date (meaning 20s)
         // WILL BE DEPRECATED as years go on b/c using "logic" to determine which century
-        dateStr = new StringBuffer("7/4/14");
+        dateStr = "7/4/14";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 7, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2014, date.getYear());
+        Assert.assertEquals("Wrong month", 7, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2014, date.get(Calendar.YEAR));
 
         // Lack of a year -> means it's this year
-        dateStr = new StringBuffer("7/4");
+        dateStr = "7/4";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 7, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2015, date.getYear());
+        Assert.assertEquals("Wrong month", 7, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
 
         // Leading 0 on month
-        dateStr = new StringBuffer("07/4");
+        dateStr = "07/4";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 7, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2015, date.getYear());
+        Assert.assertEquals("Wrong month", 7, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
 
 
         // Leading 0 on day
-        dateStr = new StringBuffer("7/04");
+        dateStr = "7/04";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 7, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2015, date.getYear());
+        Assert.assertEquals("Wrong month", 7, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
+    }
 
-
+    public void testDatesWithNonDigitDates() throws Exception {
         // Now non-digit months
-        dateStr = new StringBuffer("jan 4");
-        eventList = operation.getAllEvents(dateStr);
+        String dateStr = "jan 4";
+        List<Event> eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
-        date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 1, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2015, date.getYear());
+        GregorianCalendar date = eventList.get(0).getDate();
+        Assert.assertEquals("Wrong month", 1, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
 
 
         // non-digit months with year and comma
-        dateStr = new StringBuffer("jAn 4, 2014");
+        dateStr = "jAn 4, 2014";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 1, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2014, date.getYear());
+        Assert.assertEquals("Wrong month", 1, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2014, date.get(Calendar.YEAR));
 
         // non-digit months with year and without comma
-        dateStr = new StringBuffer("Jan 4 2014");
+        dateStr = "Jan 4 2014";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 1, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2014, date.getYear());
+        Assert.assertEquals("Wrong month", 1, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2014, date.get(Calendar.YEAR));
 
 
         // full name month
-        dateStr = new StringBuffer("january 4");
+        dateStr = "january 4";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 1, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2015, date.getYear());
+        Assert.assertEquals("Wrong month", 1, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
 
 
         // full name month plus year and comma
-        dateStr = new StringBuffer("january 4, 2015");
+        dateStr = "january 4, 2015";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 1, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2015, date.getYear());
+        Assert.assertEquals("Wrong month", 1, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
 
 
         // full name month plus year and no comma
-        dateStr = new StringBuffer("january 4 2014");
+        dateStr = "january 4 2014";
         eventList = operation.getAllEvents(dateStr);
         Assert.assertEquals("Only one event", 1, eventList.size());
         date = eventList.get(0).getDate();
-        Assert.assertEquals("Wrong month", 1, date.getMonth());
-        Assert.assertEquals("Wrong date", 4, date.getDay());
-        Assert.assertEquals("Wrong year", 2014, date.getYear());
+        Assert.assertEquals("Wrong month", 1, date.get(Calendar.MONTH));
+        Assert.assertEquals("Wrong date", 4, date.get(Calendar.DATE));
+        Assert.assertEquals("Wrong year", 2014, date.get(Calendar.YEAR));
 
+    }
+
+    public void testAllowedCharacters() throws Exception {
+        assertEquals("Wrong regex", "[a-zA-Z0-9\\p{Punct}]", operation.regexAllowed);
     }
 }
