@@ -19,7 +19,9 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,22 +44,29 @@ public class OCROperations {
 
     private String[] allowedCharacters= {"a-z", "A-Z", "0-9", "\\p{Punct}"};
     public String regexAllowed;
+    private String allMonths = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sept(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
+
     {
         regexAllowed = Arrays.toString(allowedCharacters).replace(", ", "");
     }
 
-    private List<Month> months;
+    private Map<String, Integer> monthsNumber;
 
     public OCROperations() {
         baseAPI = new TessBaseAPI();
-        months = new ArrayList<>();
+        monthsNumber = new HashMap<>();
 
         readInDefaultValues();
     }
 
     private void readInDefaultValues() {
+        int value = 1;
         for(String tmpMonth : MONTHS) {
-            months.add(new Month(tmpMonth));
+            Scanner in = new Scanner(tmpMonth);
+            while(in.hasNext()) {
+                monthsNumber.put(in.next(), value);
+            }
+            value++;
         }
     }
 
@@ -79,9 +88,15 @@ public class OCROperations {
         return text;
     }
 
+    /**
+     * Cleans the string for easier parsing
+     *
+     * @param text Input string
+     * @return A string stripped of invalid characters
+     */
     public String clean(String text) {
         // Allowed characters...
-        return text.replaceAll(regexAllowed, "");
+        return text.trim().replaceAll(regexAllowed, "");
     }
 
     public List<Event> getAllEvents(String text) {
@@ -91,9 +106,6 @@ public class OCROperations {
 
         GregorianCalendar time = new GregorianCalendar();
         Calendar today = Calendar.getInstance();
-        int year = today.get(Calendar.YEAR);
-        int month = today.get(Calendar.MONTH);
-        int day = today.get(Calendar.DATE);
 
         // Look for several things
         // The Date
@@ -125,41 +137,50 @@ public class OCROperations {
         String manipulate = text.toLowerCase();
         manipulate = manipulate.replaceAll("-", "/");
 
-        String regex = "()";
-        Pattern pattern = Pattern.compile(".*(\\d{2})/(\\d{2})/(\\d{2}|\\d{4})?(.*)");
+        final int YEAR = new GregorianCalendar().get(Calendar.YEAR);
 
-        Matcher m = pattern.matcher(text);
+        // Number only
+        Pattern pattern = Pattern.compile(".*(\\d{1,2})/(\\d{1,2})(/\\d{2}|\\d{4})?(.*)");
+
+        Matcher m = pattern.matcher(manipulate);
         if(m.matches()) {
             String[] matched = m.group().split("/");
             int month = Integer.parseInt(matched[0]);
             int day = Integer.parseInt(matched[1]);
-            int year = new Date().getYear();
+            int year = YEAR;
             if(matched.length > 2) {
-                year = Integer.parseInt(matched[2]);
+                if(matched[2].length() == 2) {
+                    year = Integer.parseInt(matched[2]) + 2000;
+                } else {
+                    year = Integer.parseInt(matched[2]);
+                }
             }
             return new GregorianCalendar(year, month, day);
+        }
+
+        // Includes the month name
+        String regex = String.format(".*(%s) ((\\d{1,2})(st|nd|rd|th)?)(,? (\\d{2}|\\d{4}))?", allMonths);
+        pattern = Pattern.compile(regex);
+
+        m = pattern.matcher(manipulate);
+        if(m.matches()) {
+            String month = m.group(1);
+            int day = Integer.parseInt(m.group(3));
+            int year;
+            try {
+                year = Integer.parseInt(m.group(6));
+            } catch (Exception e) {
+                year = YEAR;
+            }
+            return new GregorianCalendar(year, getMonthNumber(month), day);
+
         }
 
         return null;
     }
 
-    private class Month {
-        private String[] names;
-        private String[] toPrint = new String[2];
-
-        public Month(String data) {
-            names = data.split(" ");
-            toPrint[0] = names[0];
-            toPrint[1] = names[1];
-        }
-
-        public boolean isThisMonth(String potentialMonth) {
-            for(String compare : names) {
-                if(compare.equals(potentialMonth))
-                    return true;
-            }
-            return false;
-        }
+    public int getMonthNumber(String str) {
+        return monthsNumber.get(str);
     }
 
     public static void main(String[] args) {
