@@ -179,7 +179,129 @@ public class OCROperationsTest extends TestCase {
         assertEquals("Wrong year", 2014, date.get(Calendar.YEAR));
     }
 
+    public void testTimeHoursAndMinutes() throws Exception {
+
+        String dateStr = "7:30 AM";
+        List<Event> eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        GregorianCalendar date = eventList.get(0).getDate();
+        assertEquals("Wrong hour", 7, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 30, date.get(Calendar.MINUTE));
+
+        dateStr = "7:30 PM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong hour", 19, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 30, date.get(Calendar.MINUTE));
+
+        dateStr = "7 PM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong hour", 19, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 0, date.get(Calendar.MINUTE));
+
+        dateStr = "7 AM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong hour", 7, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 0, date.get(Calendar.MINUTE));
+    }
+
+    public void testBothTimeAndDate() throws Exception {
+
+        // no year and all info time
+        String dateStr = "4/23 7:30 PM";
+        List<Event> eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        GregorianCalendar date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 4, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 23, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 19, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 30, date.get(Calendar.MINUTE));
+
+        // all info date all info time
+        dateStr = "4/23/2016 7:30 PM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 4, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 23, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2016, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 19, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 30, date.get(Calendar.MINUTE));
+
+        // all info date (in the past) all info time
+        dateStr = "4/23/2014 5:30 PM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 4, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 23, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2014, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 17, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 30, date.get(Calendar.MINUTE));
+
+        // all info date   lack minutes
+        dateStr = "4/23 5 PM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 4, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 23, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 17, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 0, date.get(Calendar.MINUTE));
+
+        // word month day lack minutes
+        dateStr = "feb 28th 5 PM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 2, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 28, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 17, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 0, date.get(Calendar.MINUTE));
+
+        // word month day    all info time
+        dateStr = "february 28th 2:27 PM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 2, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 28, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2015, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 14, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 27, date.get(Calendar.MINUTE));
+
+        // word month day     lack minutes
+        dateStr = "March 17th, 2016 12 AM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 3, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 17, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2016, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 12, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 0, date.get(Calendar.MINUTE));
+
+        // word month day     lack minutes
+        dateStr = "March 17th, 2016 11 AM";
+        eventList = operation.getAllEvents(dateStr);
+        assertEquals("Only one event", 1, eventList.size());
+        date = eventList.get(0).getDate();
+        assertEquals("Wrong month", 3, date.get(Calendar.MONTH));
+        assertEquals("Wrong day", 17, date.get(Calendar.DATE));
+        assertEquals("Wrong year", 2016, date.get(Calendar.YEAR));
+        assertEquals("Wrong hour", 11, date.get(Calendar.HOUR_OF_DAY));
+        assertEquals("Wrong minutes", 0, date.get(Calendar.MINUTE));
+    }
+
     public void testAllowedCharacters() throws Exception {
-        assertEquals("Wrong regex", "^[a-zA-Z0-9\\p{Punct}]", operation.regexAllowed);
+        assertEquals("Wrong regex", "[^a-zA-Z0-9\\p{Punct}]", operation.regexAllowed);
     }
 }

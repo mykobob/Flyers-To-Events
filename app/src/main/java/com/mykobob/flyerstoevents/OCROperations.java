@@ -106,7 +106,6 @@ public class OCROperations {
         Event curEvent = new Event(text);
 
         GregorianCalendar time = new GregorianCalendar();
-        Calendar today = Calendar.getInstance();
 
         // Look for several things
         // The Date
@@ -119,7 +118,18 @@ public class OCROperations {
             time = date;
         }
 
-        curEvent.setEventInfo(time);
+        int[] hourMin = getTime(text);
+        if(hourMin != null) {
+            int hour = hourMin[0];
+            if(hourMin[2] == 12) {
+                time.set(Calendar.AM_PM, Calendar.PM);
+            } else {
+                time.set(Calendar.AM_PM, Calendar.AM);
+            }
+            time.set(Calendar.HOUR, hour);
+
+            time.set(Calendar.MINUTE, hourMin[1]);
+        }
 
 
         // The Time
@@ -127,11 +137,51 @@ public class OCROperations {
         // Hour  Minutes AMorPM   OR Hour AMorPM
         // (\d+)(:\d{2})(AM|PM)?|(\d+)( +)(AM|PM)
 
+
         // Building and Location
 
+        curEvent.setEventInfo(time);
         events.add(curEvent);
 
         return events;
+    }
+
+    private int[] getTime(String text) {
+        text = text.toLowerCase();
+        int[] hourMin = new int[3];
+
+        // Includes hours and minutes
+        Pattern pattern = Pattern.compile(".*?(\\d{1,2}):(\\d{2})( )?(am|pm)(.*)");
+
+        Matcher m = pattern.matcher(text);
+        if(m.matches()) {
+            hourMin[0] = Integer.parseInt(m.group(1));
+            hourMin[1] = Integer.parseInt(m.group(2));
+            try {
+                String AMorPM = m.group(4);
+                hourMin[2] = AMorPM.equals("am") ? 0 : 12;
+            } catch (Exception e) {
+                hourMin[2] = 0;
+            }
+            return hourMin;
+        }
+
+        // Only the hours
+        pattern = Pattern.compile(".*?(\\d{1,2})( )?(am|pm).*");
+
+        m = pattern.matcher(text);
+        if(m.matches()) {
+            hourMin[0] = Integer.parseInt(m.group(1));
+            hourMin[1] = 0;
+            try {
+                hourMin[2] = m.group(3).equals("am") ? 0 : 12;
+            } catch (Exception e) {
+                hourMin[2] = 0;
+            }
+            return hourMin;
+        }
+
+        return null;
     }
 
     private GregorianCalendar getDate(String text) {
@@ -140,27 +190,28 @@ public class OCROperations {
 
         final int YEAR = new GregorianCalendar().get(Calendar.YEAR);
 
-        // Number only
-        Pattern pattern = Pattern.compile(".*(\\d{1,2})/(\\d{1,2})(/\\d{2}|\\d{4})?(.*)");
+        // Numbers only
+        Pattern pattern = Pattern.compile(".*?(\\d{1,2})/(\\d{1,2})(/(\\d{4}|\\d{2}))?(.*)");
 
         Matcher m = pattern.matcher(manipulate);
         if(m.matches()) {
-            String[] matched = m.group().split("/");
-            int month = Integer.parseInt(matched[0]);
-            int day = Integer.parseInt(matched[1]);
-            int year = YEAR;
-            if(matched.length > 2) {
-                if(matched[2].length() == 2) {
-                    year = Integer.parseInt(matched[2]) + 2000;
-                } else {
-                    year = Integer.parseInt(matched[2]);
+//            String[] matched = m.group().split("/");
+            int month = Integer.parseInt(m.group(1));
+            int day = Integer.parseInt(m.group(2));
+            int year = YEAR; // by default, if no year is provided, it's this year
+            String yearStr = m.group(4);
+            if(yearStr != null) { // a year is supplied
+                if(yearStr.length() == 2) { // short hand for year
+                    year = Integer.parseInt(yearStr) + (year / 100 * 100);
+                } else { // the whole year is provided
+                    year = Integer.parseInt(yearStr);
                 }
             }
             return new GregorianCalendar(year, month, day);
         }
 
         // Includes the month name
-        String regex = String.format(".*(%s) ((\\d{1,2})(st|nd|rd|th)?)(,? (\\d{2}|\\d{4}))?", allMonths);
+        String regex = String.format(".*?(%s) ((\\d{1,2})(st|nd|rd|th)?)(,? (\\d{4}|\\d{2}))?(.*)", allMonths);
         pattern = Pattern.compile(regex);
 
         m = pattern.matcher(manipulate);
