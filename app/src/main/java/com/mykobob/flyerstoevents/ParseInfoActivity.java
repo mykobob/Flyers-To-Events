@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -97,8 +98,6 @@ public class ParseInfoActivity extends Activity {
         operate = new OCROperations();
         progress = (ProgressBar) findViewById(R.id.progressBar);
         processing = (TextView) findViewById(R.id.process_str);
-        progress.setVisibility(View.GONE);
-        processing.setVisibility(View.GONE);
         events = new ArrayList<>();
 
         final Button anotherPic = (Button) findViewById(R.id.anotherPic);
@@ -112,6 +111,13 @@ public class ParseInfoActivity extends Activity {
         createEnvironment();
 
         launchCameraWithInfo();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        progress.setVisibility(View.GONE);
+        processing.setVisibility(View.GONE);
     }
 
     private void createEnvironment() {
@@ -175,9 +181,6 @@ public class ParseInfoActivity extends Activity {
             };
 
             t.start();
-            while(!finished[0]);
-            processing.setVisibility(View.GONE);
-            progress.setVisibility(View.GONE);
 
         } else {
             Toast.makeText(ParseInfoActivity.this, "Take a picture first!", Toast.LENGTH_LONG).show();
@@ -188,6 +191,9 @@ public class ParseInfoActivity extends Activity {
     private void showData() {
         Intent showData = new Intent(this, DisplayText.class);
         showData.putExtra("OCR", events.get(0));
+
+//        progress.setVisibility(View.GONE);
+//        processing.setVisibility(View.GONE);
 
         startActivity(showData);
     }

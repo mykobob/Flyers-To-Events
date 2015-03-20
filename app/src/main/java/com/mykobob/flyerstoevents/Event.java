@@ -13,6 +13,7 @@ public class Event implements Parcelable {
 
     private String building;
     private double roomNumber;
+
     private String information;
     private String text;
 
