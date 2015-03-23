@@ -42,7 +42,7 @@ public class OCROperations {
     private String DATA_PATH = Environment.getExternalStorageDirectory() + "/flyerstoevents/";
     private String language = "eng";
 
-    private String[] allowedCharacters= {"a-z", "A-Z", "0-9", "\\p{Punct}"};
+    private String[] allowedCharacters= {"a-z", "A-Z", "0-9", "\\p{Punct}", "\\s"};
     public String regexAllowed;
     private String allMonths = "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sept(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?";
 
